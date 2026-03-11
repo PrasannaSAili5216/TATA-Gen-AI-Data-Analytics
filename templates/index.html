@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tata Data Analytics Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <div class="brand">
+                <h1>Tata Analytics Dashboard</h1>
+                <span class="status-badge">System Online</span>
+            </div>
+            <div class="controls-info">
+                <p>GenAI & ML Pipeline Controller</p>
+            </div>
+        </header>
+
+        <main class="dashboard-grid">
+            <!-- Left Sidebar: Controls & Data Stats -->
+            <aside class="sidebar">
+                <!-- Operations Panel -->
+                <section class="card operations-card">
+                    <h2><span class="icon">⚡</span> Pipeline Operations</h2>
+                    <div class="button-grid">
+                        <button id="btn-preprocess" onclick="runOperation('preprocess')">
+                            <span class="btn-icon">⚙️</span>
+                            <span class="btn-text">Preprocess</span>
+                        </button>
+                        <button id="btn-train" onclick="runOperation('train')">
+                            <span class="btn-icon">🧠</span>
+                            <span class="btn-text">Train Model</span>
+                        </button>
+                        <button id="btn-bias" onclick="runOperation('bias')">
+                            <span class="btn-icon">⚖️</span>
+                            <span class="btn-text">Evaluate Bias</span>
+                        </button>
+                        <button id="btn-shap" onclick="runOperation('shap')">
+                            <span class="btn-icon">🔍</span>
+                            <span class="btn-text">Explain (SHAP)</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Dataset Info Panel -->
+                <section class="card info-card">
+                    <h2><span class="icon">📊</span> Dataset Live Stats</h2>
+                    <div id="dataset-info">
+                        <div class="loader-sm"></div> <span class="loading-text">Loading Data...</span>
+                    </div>
+                </section>
+            </aside>
+
+            <!-- Right Area: Visualization & Logs -->
+            <div class="main-content">
+                <!-- Visualization Area (Top Half) -->
+                <section class="card visual-card">
+                    <div class="card-header">
+                        <h2>Visual Analysis Output</h2>
+                        <div class="viz-controls">
+                            <span class="badge">Visualization</span>
+                        </div>
+                    </div>
+                    <div class="viz-content" id="viz-container">
+                        <!-- Default State -->
+                        <div id="default-placeholder" class="placeholder-state">
+                            <div class="placeholder-icon">📉</div>
+                            <p>Select an operation to view results.</p>
+                            <p class="sub-text">SHAP plots and visual metrics will appear here.</p>
+                        </div>
+
+                        <!-- SHAP Container (Hidden by default) -->
+                        <div id="shap-container" style="display: none; height: 100%;">
+                            <img id="shap-plot" src="" alt="SHAP Plot">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Console Output (Bottom Half) -->
+                <section class="card console-card">
+                    <div class="console-header">
+                        <h2><span class="icon">💻</span> Terminal Logs</h2>
+                        <div class="console-actions">
+                            <button class="clear-btn" onclick="clearConsole()">Clear Logs</button>
+                        </div>
+                    </div>
+                    <div id="console-logs" class="logs-container">
+                        <div class="log-entry system"><span class="timestamp">[System]</span> Dashboard initialized.
+                            Ready for operations.</div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Fetch Dataset Summary
+        async function fetchSummary() {
+            try {
+                const response = await fetch('/api/data_summary');
+                const data = await response.json();
+
+                if (data.error) {
+                    document.getElementById('dataset-info').innerHTML = `<p class="error-text">${data.error}</p>`;
+                    return;
+                }
+
+                let html = `
+                    <div class="stats-row">
+                        <div class="stat-box">
+                            <label>Row Count</label>
+                            <span class="val">${data.rows}</span>
+                        </div>
+                        <div class="stat-box">
+                            <label>Features</label>
+                            <span class="val">${data.columns.length}</span>
+                        </div>
+                    </div>
+                    <div class="mini-table-container">
+                        <div class="table-label">Active Features:</div>
+                        <div class="feature-tags">
+                            ${data.columns.slice(0, 8).map(c => `<span class="tag">${c}</span>`).join('')}
+                            ${data.columns.length > 8 ? `<span class="tag more">+${data.columns.length - 8}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+                document.getElementById('dataset-info').innerHTML = html;
+            } catch (err) {
+                console.error(err);
+                document.getElementById('dataset-info').innerHTML = '<p class="error-text">Failed to connect to server.</p>';
+            }
+        }
+
+        // Run Operations
+        async function runOperation(type) {
+            const btn = document.getElementById(`btn-${type}`);
+            const originalContent = btn.innerHTML;
+
+            // Set loading state
+            btn.innerHTML = `<span class="loader-spinner"></span> <span class="btn-text">Running...</span>`;
+            btn.classList.add('loading');
+            document.querySelectorAll('button').forEach(b => b.disabled = true);
+
+            log(`> Executing operation: ${type}...`);
+
+            // Visual feedback switch
+            if (type === 'shap') {
+                showVisualPlaceholder('Genering SHAP explainer plot...');
+            }
+
+            try {
+                const response = await fetch(`/api/run_${type}`, { method: 'POST' });
+                const result = await response.json();
+
+                if (result.success) {
+                    log(`> [SUCCESS] ${type} completed.`, 'success');
+                    log(result.output, 'output');
+
+                    if (type === 'preprocess') fetchSummary();
+                    if (type === 'shap') loadShapPlot();
+                } else {
+                    log(`> [ERROR] ${type} failed.`, 'error');
+                    log(result.output, 'error');
+                }
+            } catch (err) {
+                log(`> Network Error: ${err.message}`, 'error');
+            } finally {
+                // Restore button state
+                btn.innerHTML = originalContent;
+                btn.classList.remove('loading');
+                document.querySelectorAll('button').forEach(b => b.disabled = false);
+            }
+        }
+
+        // Display Utilities
+        function showVisualPlaceholder(msg) {
+            document.getElementById('shap-container').style.display = 'none';
+            const ph = document.getElementById('default-placeholder');
+            ph.style.display = 'flex';
+            ph.querySelector('p').textContent = msg;
+        }
+
+        async function loadShapPlot() {
+            const container = document.getElementById('shap-container');
+            const placeholder = document.getElementById('default-placeholder');
+            const img = document.getElementById('shap-plot');
+
+            // Add timestamp to prevent caching
+            img.src = `/api/get_shap_plot?t=${new Date().getTime()}`;
+
+            img.onload = () => {
+                placeholder.style.display = 'none';
+                container.style.display = 'flex';
+                log("> SHAP plot updated in visual panel.", 'system');
+            };
+            img.onerror = () => {
+                log("> Failed to load visualization image.", 'error');
+                showVisualPlaceholder('Error loading visualization.');
+            };
+        }
+
+        // Logging Utility
+        function log(message, type = 'info') {
+            const consoleEl = document.getElementById('console-logs');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+
+            const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
+
+            // Simple formatting for logs
+            if (type === 'output') {
+                entry.innerHTML = `<pre>${message}</pre>`;
+            } else {
+                entry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message.replace(/\n/g, '<br>')}`;
+            }
+
+            consoleEl.appendChild(entry);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        function clearConsole() {
+            document.getElementById('console-logs').innerHTML =
+                '<div class="log-entry system"><span class="timestamp">[System]</span> Logs cleared.</div>';
+        }
+
+        // Initialize
+        fetchSummary();
+        log("Connected to local environment.", 'system');
+    </script>
+</body>
+
+</html>
