@@ -1,42 +1,61 @@
-# Delinquency Prediction - EDA Project
+# TATA Gen AI Data Analytics 📊
 
-This project performs Exploratory Data Analysis (EDA) on the Geldium delinquency dataset. It includes scripts to handle data corruption, clean the data (imputation), and generate a professional summary report.
+An end-to-end data science project demonstrating advanced analytics, predictive modeling, and AI explainability (XAI) as part of the **Tata Group Data Analytics** initiative.
 
-## 1. Prerequisites
-Ensure you have Python installed. Install the required libraries:
+---
 
+## 🚀 Project Overview
+
+This repository focuses on **predicting customer delinquency** for Geldium. The solution automates the journey from raw, corrupted data to professional business presentations and explainable AI insights.
+
+---
+
+## 📂 Project Classification & Structure
+
+To make navigation easier, the project files are classified below:
+
+### 🛠️ 1. Data Processing & Preparation
+*   `inspect_data.py`: Main entry point for data recovery, cleaning, and imputation.
+*   `preprocess_data.py`: Standardizes features and prepares data for modeling.
+*   `extract_excel.py` & `manual_extract.py`: Robust scripts for handling corrupted XLSX files.
+*   `investigate_missed_payments.py`: Granular analysis of missed payment patterns.
+
+### 🧠 2. Predictive Modeling & AI
+*   `train_model.py`: Trains the classification model to predict delinquency.
+*   `evaluate_bias.py`: Checks for model fairness across different demographics.
+*   `explain_model_shap.py`: Uses **SHAP (SHapley Additive exPlanations)** to provide transparent, feature-level insights into model decisions.
+
+### 📈 3. Exploratory Data Analysis (EDA)
+*   `eda_analysis_v2.py`: Generates statistical summaries and correlation matrices.
+*   `peek_sheet.py`: Utility for quick data inspection.
+
+### 📝 4. Automated Reporting & Deliverables
+*   `generate_submission.py`: Produces the final Word-based EDA Summary Report.
+*   `create_final_deck.py`: Generates the **Professional PowerPoint Presentation** using project findings.
+*   `generate_final_report.py`: Orchestrates the consolidated project report.
+
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+Install the required dependencies:
 ```bash
-pip install pandas openpyxl python-docx
+pip install pandas openpyxl python-docx python-pptx shap scikit-learn matplotlib seaborn
 ```
 
-## 2. Project Scripts
+### Execution Flow
+1.  **Clean Data**: `python inspect_data.py`
+2.  **Train Model**: `python train_model.py`
+3.  **Explain Logic**: `python explain_model_shap.py`
+4.  **Generate Reports**: `python create_final_deck.py`
 
-### A. Data Cleaning (`inspect_data.py`)
-This script is the **first step**. It:
-1.  Manually extracts data from the corrupted `TASK_DETAILS/TASK_1/Delinquency_prediction_dataset.xlsx`.
-2.  Standardizes categorical columns (e.g., Employment Status).
-3.  Imputes missing values (Income, Loan Balance, Credit Score) using Median/Mean strategies.
-4.  Saves the result to `cleaned_dataset.csv`.
+---
 
-**Run command:**
-```bash
-python inspect_data.py
-```
+## ✨ Key Features
+*   **Explainable AI**: No "black box" decisions; every prediction is justified via SHAP values.
+*   **Bias Mitigation**: Demographic parity checks ensure fair lending predictions.
+*   **Professional Automation**: Direct conversion of data insights into boardroom-ready PPTX slides.
 
-### B. Report Generation (`generate_submission.py`)
-This script contains the analysis findings and generates the final submission file. It strictly follows the provided template structure.
-
-**Run command:**
-```bash
-python generate_submission.py
-```
-**Output:** `EDA_Summary_Report_Submission.docx` (Submit this file).
-
-## 3. Other Files
-*   `eda_analysis.py`: A helper script used during development to calculate correlations and statistics. You can run this if you want to see the raw numbers in the terminal.
-*   `manual_extract.py`: The original recovery script (logic helps `inspect_data.py`).
-
-## 4. How to Submit
-1.  Run `python inspect_data.py` to verify data is clean.
-2.  Run `python generate_submission.py` to create the report.
-3.  Upload `EDA_Summary_Report_Submission.docx`.
+---
+*Created for the Tata Group Forage Intern Program.*
