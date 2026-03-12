@@ -53,7 +53,6 @@ pip install pandas openpyxl python-docx python-pptx shap scikit-learn matplotlib
 ---
 
 ## ✨ Key Features
-*   **Explainable AI**: No "black box" decisions; every prediction is justified via SHAP values.
 *   **Bias Mitigation**: Demographic parity checks ensure fair lending predictions.
 *   **Professional Automation**: Direct conversion of data insights into boardroom-ready PPTX slides.
 
